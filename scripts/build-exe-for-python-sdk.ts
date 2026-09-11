@@ -484,14 +484,7 @@ class SingleExeBuild {
     const stagedBuild = join(this.staging, 'node_modules', 'node-pty', 'build')
     if (this.cli.dryRun) console.log(`build-exe-for-python-sdk: [dry-run] rm -rf ${stagedBuild}`)
     else await rm(stagedBuild, { recursive: true, force: true })
-    const packageDirectory = join(
-      root,
-      'packages',
-      'subprocess',
-      'subprocess-local',
-      'node_modules',
-      'node-pty',
-    )
+    const packageDirectory = join(this.staging, 'node_modules', 'node-pty')
     if (target.platform === 'win') {
       if (target.arch !== 'x64') {
         throw new Error('build-exe-for-python-sdk: Windows supports x64 only.')
