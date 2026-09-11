@@ -290,10 +290,11 @@ class SingleExeBuild {
       '--filter',
       DEPLOY_ROOT_PACKAGE,
       'deploy',
+      '--legacy',
       '--prod',
       '--config.node-linker=hoisted',
+      '--config.auto-install-peers=false',
       '--config.link-workspace-packages=true',
-      '--config.inject-workspace-packages=true',
       this.staging,
     ])
     await this.restoreLegacyHoists()
