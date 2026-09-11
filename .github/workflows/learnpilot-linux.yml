@@ -3,15 +3,20 @@ run-name: LearnPilot Linux package #${{ github.run_number }}
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag, for example v0.1.0
+        required: true
+        type: string
   push:
     branches: [master]
 
 permissions:
-  contents: read
+  contents: write
 
 env:
-  PRIMARY_NODE_VERSION: '24'
-  DSH_TELEMETRY_DISABLED: '1'
+  PRIMARY_NODE_VERSION: "24"
+  DSH_TELEMETRY_DISABLED: "1"
 
 jobs:
   package:
@@ -83,8 +88,26 @@ jobs:
       - name: Build Linux executable
         run: pnpm exec tsx scripts/build-exe-for-python-sdk.ts --targets=node24-linux-x64 --skip-build
 
+      - name: Resolve package version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          tag="${RELEASE_TAG:-}"
+          if [ -n "$tag" ]; then
+            if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Release tag must look like v0.1.0"
+              exit 1
+            fi
+            version="${tag#v}"
+          else
+            version="0.1.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Build installer archives
-        run: bash packaging/linux/build-package.sh "0.1.${{ github.run_number }}"
+        run: bash packaging/linux/build-package.sh "${{ steps.version.outputs.version }}"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -94,3 +117,18 @@ jobs:
             dist-linux/learnpilot-linux-x64.tar.gz
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish GitHub release
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          gh release create "$RELEASE_TAG" \
+            dist-linux/learnpilot-linux-x64.deb \
+            dist-linux/learnpilot-linux-x64.tar.gz \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "LearnPilot $RELEASE_TAG" \
+            --generate-notes \
+            --target "$GITHUB_SHA"
