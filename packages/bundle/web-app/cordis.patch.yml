@@ -100,6 +100,9 @@
     - id: workspace-controller
       name: '@deepseek-ai/dsh-api-workspace-controller'
 
+    - id: education-homework-controller
+      name: '@deepseek-ai/dsh-education-homework-controller'
+
     - id: cordis-host-runner
       name: '@deepseek-ai/dsh-cordis-host-runner'
 
@@ -187,6 +190,9 @@
 
     - id: ui-layout
       name: '@deepseek-ai/dsh-client-ui-layout'
+
+    - id: ui-education
+      name: '@deepseek-ai/dsh-client-ui-education'
 
     - id: ui-renderer
       name: '@deepseek-ai/dsh-client-ui-renderer'

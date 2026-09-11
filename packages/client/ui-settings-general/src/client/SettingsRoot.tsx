@@ -107,7 +107,7 @@ function SettingsPanel({ rows, renderSlot, activeId, onSelect, onClose }: PanelP
  */
 export function SettingsRoot(props: SettingsRootComponentProps) {
   const {
-    wide, reconnect, useConnectionState, useSections, useOnboardingSteps, useSessions, renderSlot, t,
+    wide, reconnect, useConnectionState, useNavigationRequest, useSections, useOnboardingSteps, useSessions, renderSlot, t,
   } = props
   const [open, setOpen] = useState(false)
   const [activeId, setActiveId] = useState<string | undefined>(undefined)
@@ -136,12 +136,21 @@ export function SettingsRoot(props: SettingsRootComponentProps) {
   const connectionState = useConnectionState(state => state)
   const previousConnectionState = useRef(connectionState)
   const onboardingSteps = useOnboardingSteps(s => s)
+  const navigationRequest = useNavigationRequest(s => s)
+  const handledNavigationRequest = useRef(0)
   const onboardingActive = useSessions(state =>
     state.phase === 'ready'
     && (state.current === undefined || state.byId[state.current]?.blank === true))
   const onboardingStep = onboardingActive
     ? onboardingSteps.find(step => !completedOnboarding.has(step.id))
     : undefined
+
+  useEffect(() => {
+    if (navigationRequest === undefined || navigationRequest.revision <= handledNavigationRequest.current) return
+    handledNavigationRequest.current = navigationRequest.revision
+    setActiveId(navigationRequest.section)
+    setOpen(true)
+  }, [navigationRequest])
 
   useEffect(() => {
     if (onboardingActive) return

@@ -110,6 +110,7 @@
   // and the package test glob above needs no per-file entry.
   "exclude": [
     "packages/client/*/src/**",
+    "packages/education/homework/tests/**",
     "packages/*/*/tests/**/*.client.ts",
     "packages/*/*/tests/**/*.client.tsx",
     "packages/*/*/tests/**/*.client.spec.ts",
@@ -158,6 +159,7 @@
     { "path": "./packages/api/session-controller/tsconfig.host.json" },
     { "path": "./packages/api/settings-controller" },
     { "path": "./packages/api/workspace-controller/tsconfig.host.json" },
+    { "path": "./packages/education/homework-controller/tsconfig.host.json" },
     { "path": "./packages/typert/loader" },
     { "path": "./packages/session/session-persistence" },
     { "path": "./packages/session/session-format" },

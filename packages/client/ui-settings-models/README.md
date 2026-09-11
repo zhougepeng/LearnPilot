@@ -9,7 +9,7 @@ English | [中文](README.zh.md)
 
 ## Summary
 
-`dsh-client-ui-settings-models` is the Models settings page of the dsh web client: users configure API keys (stored write-only under the profile's credential reference), edit each provider's model list, and hand-declare custom pi-ai routes, with provider rows and one editor card at a time. The page joins the provider directory, the settings document, and the credential descriptions into one shared snapshot, so a row's state stays consistent across all three. It also walks first-run users through two ordered dialogs — a versioned internal-testing notice and the conditional official-DeepSeek credential step.
+`dsh-client-ui-settings-models` is the Models settings page of the dsh web client: users configure API keys (stored write-only under the profile's credential reference), edit each provider's model list, choose the global default model, and hand-declare custom pi-ai routes. The page joins the provider directory, the live model catalog, the settings document, and the credential descriptions into one shared snapshot. It also walks first-run users through two ordered dialogs — a versioned internal-testing notice and the conditional official-DeepSeek credential step.
 
 ## Table of Contents
 
@@ -26,6 +26,10 @@ English | [中文](README.zh.md)
 ## Use this package
 
 Open the Models page from the Settings navigation to see every configured provider as a row. A whole-section provider whose key is not configured anywhere renders as its open setup card instead, but only in the first-run posture and only until the user closes that card. Each card kind owns its own open state, so closing one never discards a draft in another.
+
+### Default model
+
+The catalog-backed selector at the top shows the live DSH default and every advertised model route. **Use as default** writes `provider` and `model` to the existing `agent-default-model` settings section and clears a previously stored reasoning effort, so a stale effort cannot be applied to an incompatible model. New conversations and Host features that read `ctx.agentDefaultModel` use the saved selection; an existing session with a recorded request keeps its durable selection.
 
 ### API keys
 
@@ -89,7 +93,7 @@ These pages cover the settings base, the seams this page joins, and the design r
 <a id="model-experience"></a>
 ## Model Experience
 
-None, as the package is a browser-side UI plugin layer that registers nothing model-facing.
+None, as this package only edits which route other DSH services use; it does not send a model request itself.
 
 #### KV Cache effect
 

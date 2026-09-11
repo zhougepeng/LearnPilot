@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { TestRemote } from '@deepseek-ai/dsh-client-test-runtime'
 import { apply, inject } from '../src/client/index.ts'
 import { SettingsSchemaService } from '../src/client/schema.ts'
+import { SettingsNavigationService } from '../src/client/settings-navigation.ts'
 import { SettingsScopeBinder } from '../src/client/settings-scope.ts'
 import { apply as hostApply } from '../src/index.ts'
 
@@ -20,11 +21,12 @@ describe('settings domain base plugin', () => {
     expect(hostApply).not.toThrow()
   })
 
-  it('mounts the scope service under settingsScope and reads once eagerly', async () => {
+  it('mounts each settings service once and reads the document once eagerly', async () => {
     const { ctx, describeCall, fiber } = bench()
     await fiber.await()
     expect(ctx.get('settingsScope')).toBeInstanceOf(SettingsScopeBinder)
     expect(ctx.get('settingsSchema')).toBeInstanceOf(SettingsSchemaService)
+    expect(ctx.get('settingsNavigation')).toBeInstanceOf(SettingsNavigationService)
     await vi.waitFor(() => { expect(describeCall).toHaveBeenCalledTimes(1) })
   })
 
@@ -45,6 +47,7 @@ describe('settings domain base plugin', () => {
     await fiber.dispose()
     expect(ctx.get('settingsScope')).toBeUndefined()
     expect(ctx.get('settingsSchema')).toBeUndefined()
+    expect(ctx.get('settingsNavigation')).toBeUndefined()
     remote.emit('settings/document-updated', ['ui-test', 0])
     ctx.emit('connection/reset')
     await Promise.resolve()

@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types", "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo" },
+  "files": ["src/index.ts", "src/types.ts", "src/spec.ts", "src/textbook-presets.ts", "src/chapter-sources.ts"],
+  "references": [
+    { "path": "../../core/agent-default-model" },
+    { "path": "../../llm/llm" },
+    { "path": "../../../vendor/cordis" },
+    { "path": "../../education/homework" },
+    { "path": "../../storage/storage-domain" },
+    { "path": "../../typert/protocol" }
+  ]
+}

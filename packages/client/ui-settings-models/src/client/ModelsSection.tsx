@@ -78,6 +78,14 @@ interface EditorTarget extends ProviderIdentity {
   declared?: boolean
 }
 
+interface DefaultModelOption {
+  readonly provider: string
+  readonly model: string
+  readonly label: string
+}
+
+const defaultModelValue = (provider: string, model: string): string => JSON.stringify([provider, model])
+
 /** Values that vary around the shared provider-editor rendering. */
 interface ProviderEditorRenderProps extends Pick<
   ProviderEditorProps,
@@ -212,6 +220,10 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   const [savedTarget, setSavedTarget] = useState<ProviderIdentity | undefined>(undefined)
   const [declaring, setDeclaring] = useState(false)
   const [dismissedSetup, setDismissedSetup] = useState<ReadonlySet<string>>(() => new Set())
+  const [defaultDraft, setDefaultDraft] = useState<string | undefined>(undefined)
+  const [savingDefault, setSavingDefault] = useState(false)
+  const [defaultFailure, setDefaultFailure] = useState<string | undefined>(undefined)
+  const [defaultSaved, setDefaultSaved] = useState(false)
 
   const announceSaved = (target: ProviderIdentity): void => {
     // Announced only once the refreshed directory is in the snapshot the
@@ -303,12 +315,96 @@ function Loaded({ injected, renderSlot }: { injected: ModelsSectionFace; renderS
   // one whose schema names the protocols one may speak; without it mounted
   // there is nothing to declare and the entry point stays disabled.
   const protocols = protocolChoices(state.namespaces.get('llm-pi-ai'), schema)
+  const modelCatalog = state.modelCatalog
+  const modelOptions: DefaultModelOption[] = modelCatalog?.groups.flatMap(group => group.models.map(model => ({
+    provider: group.id,
+    model: model.id,
+    label: model.name,
+  }))) ?? []
+  const currentDefaultValue = modelCatalog === null
+    ? ''
+    : defaultModelValue(modelCatalog.default.provider, modelCatalog.default.model)
+  const selectedDefaultValue = defaultDraft ?? currentDefaultValue
+  const selectedDefault = modelOptions.find(option =>
+    defaultModelValue(option.provider, option.model) === selectedDefaultValue)
+  const currentDefaultListed = modelOptions.some(option =>
+    defaultModelValue(option.provider, option.model) === currentDefaultValue)
+
+  const saveDefault = (): void => {
+    if (selectedDefault === undefined || savingDefault) return
+    setSavingDefault(true)
+    setDefaultFailure(undefined)
+    setDefaultSaved(false)
+    const revision = state.namespaces.get('agent-default-model')?.revision
+    void operations.saveDefaultModel(selectedDefault, revision)
+      .then(async (outcome) => {
+        if (outcome.kind !== 'written') {
+          setDefaultFailure(outcome.kind === 'conflict' ? t('conflict') : outcome.message)
+          return
+        }
+        await controller.load()
+        setDefaultDraft(undefined)
+        setDefaultSaved(true)
+      })
+      .finally(() => { setSavingDefault(false) })
+  }
 
   return (
     <div className={styles['section']}>
       <h2 className={styles['title']}>{t('title')}</h2>
       <p className={styles['intro']}>{t('intro')}</p>
       {!state.writable && state.status === 'ready' ? <p className={styles['notice']}>{t('readOnly')}</p> : null}
+      {modelCatalog === null
+        ? null
+        : (
+          <section className={styles['defaultModel']} aria-labelledby="settings-models-default-title">
+            <div className={styles['defaultModelCopy']}>
+              <strong id="settings-models-default-title">{t('defaultTitle')}</strong>
+              <p>{t('defaultDescription')}</p>
+            </div>
+            <div className={styles['defaultModelControls']}>
+              <select
+                className={`${styles['input']} ${styles['selectInput']} ${styles['defaultModelSelect']}`}
+                aria-label={t('defaultSelect')}
+                value={selectedDefaultValue}
+                disabled={!state.writable || savingDefault || modelOptions.length === 0}
+                onChange={(event) => {
+                  setDefaultDraft(event.target.value)
+                  setDefaultFailure(undefined)
+                  setDefaultSaved(false)
+                }}
+              >
+                {!currentDefaultListed
+                  ? (
+                    <option value={currentDefaultValue} disabled>
+                      {t('defaultUnavailable').replace('{model}', `${modelCatalog.default.provider}/${modelCatalog.default.model}`)}
+                    </option>
+                  )
+                  : null}
+                {modelCatalog.groups.map(group => (
+                  <optgroup label={group.name} key={group.id}>
+                    {group.models.map(model => (
+                      <option value={defaultModelValue(group.id, model.id)} key={`${group.id}/${model.id}`}>
+                        {model.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+              <button
+                type="button"
+                className={styles['primaryButton']}
+                disabled={!state.writable || savingDefault || selectedDefault === undefined
+                  || selectedDefaultValue === currentDefaultValue}
+                onClick={saveDefault}
+              >
+                {savingDefault ? t('savingDefault') : t('setDefault')}
+              </button>
+            </div>
+            {defaultFailure === undefined ? null : <p className={styles['error']}>{defaultFailure}</p>}
+            {defaultSaved ? <p className={styles['savedNotice']} role="status">{t('defaultSaved')}</p> : null}
+          </section>
+        )}
       {savedIdentity === undefined
         ? null
         : (

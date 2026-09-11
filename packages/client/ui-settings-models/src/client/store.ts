@@ -9,7 +9,7 @@
 
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {
-  CredentialInfo, LlmConfigurableProvider, LlmProviderInfo, SettingsNamespaceView,
+  CredentialInfo, LlmConfigurableProvider, LlmProviderInfo, ModelCatalog, SettingsNamespaceView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SnapshotStore } from '@deepseek-ai/dsh-client-store'
 import { createSnapshotStore } from '@deepseek-ai/dsh-client-store'
@@ -99,6 +99,8 @@ export interface ModelsSettingsState {
   rows: readonly ProviderRow[]
   /** Namespace views by ns, for the editor's schema/layers/secrets. */
   namespaces: ReadonlyMap<string, SettingsNamespaceView>
+  /** Host-generation model directory and the current deployment default. */
+  modelCatalog: ModelCatalog | null
 }
 
 /**
@@ -149,15 +151,17 @@ function apiKeyEnvOf(
 export class ModelsSettingsStore {
   /** The snapshot the section renders from (uSES-safe store). */
   readonly store: SnapshotStore<ModelsSettingsState> = createSnapshotStore<ModelsSettingsState>({
-    status: 'idle', error: null, credentialError: null, writable: false, rows: [], namespaces: new Map(),
+    status: 'idle', error: null, credentialError: null, writable: false,
+    rows: [], namespaces: new Map(), modelCatalog: null,
   })
 
   /** Latest load wins; an older response never overwrites a newer one. */
   private generation = 0
 
   /**
-   * @param ctx - the page plugin's context, whose `remote.llm` and
-   * `remote.credentials` namespaces carry the directory and credential reads.
+   * @param ctx - the page plugin's context, whose `remote.llm`,
+   * `remote.session`, and `remote.credentials` namespaces carry the model,
+   * provider, and credential reads.
    * @param schema - settings-owned schema and immutable path operations.
    * @param describeFace - the shared mirror's describe face (namespace views and writability).
    */
@@ -178,13 +182,15 @@ export class ModelsSettingsStore {
   async load(): Promise<void> {
     const generation = ++this.generation
     this.store.update((s) => { s.status = 'loading'; s.error = null })
-    const [registered, declared] = await Promise.all([
+    const [registered, declared, modelCatalog] = await Promise.all([
       this.ctx.remote.llm.listProviders(),
       this.ctx.remote.llm.listConfigurableProviders(),
+      this.ctx.remote.session.modelCatalog(),
       this.describeFace.ensure(),
     ])
     if (!registered.ok) { this.failLoad(generation, registered.error.message); return }
     if (!declared.ok) { this.failLoad(generation, declared.error.message); return }
+    if (!modelCatalog.ok) { this.failLoad(generation, modelCatalog.error.message); return }
     const mirrored = this.describeFace.getSnapshot()
     if (mirrored.view === undefined) {
       this.failLoad(generation, mirrored.error ?? 'settings are unavailable in this browser')
@@ -237,6 +243,7 @@ export class ModelsSettingsStore {
         }
       })
       s.namespaces = namespaces
+      s.modelCatalog = modelCatalog.value
     })
   }
 

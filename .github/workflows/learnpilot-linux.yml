@@ -1,0 +1,52 @@
+name: LearnPilot Linux package
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+env:
+  PRIMARY_NODE_VERSION: '24'
+  DSH_TELEMETRY_DISABLED: '1'
+
+jobs:
+  package:
+    name: Build Linux x64 package
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@v4
+        with:
+          dest: ${{ runner.temp }}/setup-pnpm
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.PRIMARY_NODE_VERSION }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace
+        run: pnpm run build:official
+
+      - name: Build Linux executable
+        run: pnpm exec tsx scripts/build-exe-for-python-sdk.ts --targets=node24-linux-x64 --skip-build
+
+      - name: Build installer archives
+        run: bash packaging/linux/build-package.sh "0.1.${{ github.run_number }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: learnpilot-linux-x64
+          path: |
+            dist-linux/learnpilot-linux-x64.deb
+            dist-linux/learnpilot-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 14

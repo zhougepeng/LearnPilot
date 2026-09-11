@@ -76,6 +76,9 @@
       "path": "../workspace-controller/tsconfig.client.json"
     },
     {
+      "path": "../../education/homework-controller/tsconfig.client.json"
+    },
+    {
       "path": "../../typert/protocol"
     }
   ]

@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+set -eu
+
+install_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+port=${LEARNPILOT_PORT:-3081}
+exec "$install_dir/deepseek-harness-sdk-runtime-linux-x64" --profile web --port "$port" --no-open "$@"

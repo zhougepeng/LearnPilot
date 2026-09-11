@@ -127,6 +127,18 @@ function scriptedFace(options: {
       ))),
       discoverModels: discover,
     },
+    session: {
+      modelCatalog: vi.fn(() => Promise.resolve(ok({
+        default: { provider: 'openai', model: 'gpt-4.1' },
+        routableProviders: Object.keys(providers),
+        groups: Object.keys(providers).map(provider => ({
+          id: provider,
+          name: provider,
+          models: [{ id: 'gpt-4.1', name: 'GPT-4.1' }],
+        })),
+        failures: [],
+      }))),
+    },
     settings: {
       describe: vi.fn(() => Promise.resolve(remoteOk({ writable: true, namespaces: [namespace] }))),
       mutate,
@@ -822,7 +834,8 @@ describe('hand-declared providers', () => {
     // take the whole provider out of the picker. The composer's model picker
     // owns the choice, and a switch there records provider+model+effort together.
     const fields = () => [...document.querySelectorAll('input,select')]
-      .map(el => el.getAttribute('aria-label')).filter(Boolean)
+      .map(el => el.getAttribute('aria-label'))
+      .filter(label => label !== null && label !== en.defaultSelect)
 
     mountCard()
     fireEvent.change(screen.getByLabelText(en.customRoute), { target: { value: 'acme' } })

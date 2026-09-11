@@ -85,6 +85,7 @@ function mount({
       }, [])
       return select(currentConnectionState)
     },
+    useNavigationRequest: select => select(undefined),
     useOnboardingSteps: select => select(steps),
     useSections: (select) => {
       const [, force] = useState(0)

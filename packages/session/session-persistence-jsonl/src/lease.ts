@@ -31,7 +31,6 @@
 import { mkdir, open, stat } from 'node:fs/promises'
 import type { FileHandle } from 'node:fs/promises'
 import { join } from 'node:path'
-import { flock } from 'fs-ext'
 import { SessionAlreadyOwnedError } from '@deepseek-ai/dsh-session-persistence'
 import type { SessionId } from '@deepseek-ai/dsh-session'
 import { acquireLockHandleWin32, releaseLockHandleWin32 } from './win32.ts'
@@ -45,8 +44,11 @@ type HeldLock =
   | { readonly kind: 'win32'; readonly handle: number }
 
 /** Promise face over fs-ext's callback flock, pinned to its string-flag overload. */
-function flockAsync(fd: number, flags: 'exnb' | 'un'): Promise<void> {
-  return new Promise((resolve, reject) => {
+async function flockAsync(fd: number, flags: 'exnb' | 'un'): Promise<void> {
+  // Load the POSIX-only native addon on demand. Windows uses the Win32
+  // semaphore path and must be able to boot without fs-ext installed.
+  const { flock } = await import('fs-ext')
+  await new Promise<void>((resolve, reject) => {
     flock(fd, flags, (error) => {
       if (error) reject(error)
       else resolve()

@@ -1,0 +1,304 @@
+.confirmGroups {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.confirmForm {
+  max-width: 980px;
+}
+
+.confirmWorkspace {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  align-items: start;
+}
+
+.confirmSubjectRow {
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+  padding: 10px 0;
+  border-top: 1px solid #e8edf2;
+}
+
+.confirmSubjectColumn {
+  display: grid;
+  gap: 4px;
+  padding: 9px 4px;
+}
+
+.confirmSubjectColumn strong {
+  color: #18202a;
+  font-size: 15px;
+}
+
+.confirmSubjectColumn small {
+  color: #7a8794;
+  font-size: 12px;
+}
+
+.confirmSubjectPanel {
+  min-width: 0;
+  padding: 8px 14px 10px;
+  border: 1px solid #dfe6ee;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.confirmAddIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #b8c9e8;
+  border-radius: 5px;
+  background: #f5f8ff;
+  color: #1f5fbf;
+  cursor: pointer;
+}
+
+.confirmAddIcon:hover {
+  border-color: #1f6feb;
+  background: #edf4ff;
+}
+
+.confirmGroup {
+  border-top: 1px solid #e8edf2;
+  padding-top: 9px;
+}
+
+.confirmGroupHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 3px;
+}
+
+.confirmGroupHeader > div {
+  display: grid;
+  gap: 4px;
+}
+
+.confirmGroupHeader h2 {
+  margin: 0;
+  color: #657384;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.confirmGroupHeader span {
+  color: #1f6feb;
+  font-size: 13px;
+}
+
+.confirmGroupHeader > small {
+  color: #7a8794;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.confirmTask {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.confirmTask:last-child {
+  border-bottom: 0;
+}
+
+.confirmTaskTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.confirmTaskTitle strong {
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.confirmTaskSummary {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.confirmTaskSummary > strong {
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.confirmTaskBadges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 8px;
+}
+
+.confirmTaskBadges span {
+  color: #8a5a16;
+  font-size: 12px;
+}
+
+.confirmTaskEditor {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.confirmTaskField {
+  display: grid;
+  gap: 5px;
+  color: #657384;
+  font-size: 12px;
+}
+
+.confirmTaskField textarea,
+.confirmTaskField input,
+.confirmTaskField select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #cbd4dd;
+  border-radius: 5px;
+  background: #fff;
+  color: #18202a;
+  padding: 8px 9px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.confirmTaskField textarea {
+  resize: vertical;
+  min-height: 54px;
+}
+
+.confirmTaskFields {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.35fr) minmax(180px, 1fr);
+  gap: 10px;
+}
+
+.confirmTaskFlags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  color: #55616f;
+  font-size: 12px;
+}
+
+.confirmTaskFlags label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.confirmTaskFlags input {
+  accent-color: #1f6feb;
+}
+
+.confirmTaskActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirmIconButton,
+.confirmAdd {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid #cbd4dd;
+  border-radius: 5px;
+  background: #fff;
+  color: #55616f;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+
+.confirmIconButton:hover {
+  border-color: #1f6feb;
+  color: #1f5fbf;
+  background: #f5f8ff;
+}
+
+.confirmIconDanger:hover {
+  border-color: #d9822b;
+  color: #a65d12;
+  background: #fff9f0;
+}
+
+.confirmAdd {
+  width: auto;
+  height: 32px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  border-color: #9fbce4;
+  color: #1f5fbf;
+  background: #f5f8ff;
+  font-size: 13px;
+}
+
+.confirmAdd:hover {
+  border-color: #1f6feb;
+  background: #edf4ff;
+}
+
+.confirmTask > small {
+  grid-column: 1;
+  color: #7a8794;
+  font-size: 12px;
+}
+
+@media (max-width: 720px) {
+  .confirmSubjectRow {
+    grid-template-columns: 1fr;
+    gap: 4px;
+    padding: 8px 0;
+  }
+
+  .confirmSubjectColumn {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 2px 4px;
+  }
+
+  .confirmGroupHeader {
+    gap: 8px;
+  }
+
+  .confirmTask {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .confirmTaskFields {
+    grid-template-columns: 1fr;
+  }
+
+  .confirmTaskActions {
+    justify-content: flex-start;
+  }
+
+  .confirmTaskActions {
+    justify-content: flex-start;
+  }
+}

@@ -135,6 +135,18 @@ function wireNamespaces(): SettingsNamespaceView[] {
       secrets: [],
       revision: 4,
     },
+    {
+      ns: 'agent-default-model',
+      schema: JSON.parse(JSON.stringify(Schema.object({
+        provider: Schema.string().required(),
+        model: Schema.string().required(),
+        reasoningEffort: Schema.string(),
+      }).toJSON())) as JsonValue,
+      value: { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
+      applies: 'live',
+      secrets: [],
+      revision: 7,
+    },
   ]
 }
 
@@ -183,6 +195,17 @@ function scriptedFace(overrides: {
         { provider: 'plain', displayName: 'plain', settingsNs: 'llm-plain', settingsPath: ['profiles', 'plain'], active: false },
       ].map(({ active: _active, ...entry }) => entry)))),
       discoverModels: vi.fn(() => Promise.resolve(remoteOk([]))),
+    },
+    session: {
+      modelCatalog: vi.fn(() => Promise.resolve(remoteOk({
+        default: { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
+        routableProviders: ['deepseek-official', 'openai'],
+        groups: [
+          { id: 'deepseek-official', name: 'DeepSeek', models: DEFAULT_DEEPSEEK_MODELS },
+          { id: 'openai', name: 'openai', models: [{ id: 'gpt-4.1', name: 'GPT-4.1' }] },
+        ],
+        failures: [],
+      }))),
     },
     settings: {
       describe: vi.fn(() => Promise.resolve(remoteOk({ writable: true, hasDocument: false, namespaces: wireNamespaces() }))),
@@ -311,6 +334,23 @@ describe('ModelsSection', () => {
     const uninjected = {} as ModelsSectionProps
     render(<ModelsSection {...uninjected} />)
     expect(document.body.textContent).toBe('')
+  })
+
+  it('persists a catalog model as the global default', async () => {
+    const { mutate } = await mountSection()
+    fireEvent.change(screen.getByRole('combobox', { name: en.defaultSelect }), {
+      target: { value: JSON.stringify(['openai', 'gpt-4.1']) },
+    })
+    fireEvent.click(screen.getByRole('button', { name: en.setDefault }))
+
+    await waitFor(() => {
+      expect(mutate).toHaveBeenCalledWith('agent-default-model', [
+        { op: 'set', path: ['provider'], value: 'openai' },
+        { op: 'set', path: ['model'], value: 'gpt-4.1' },
+        { op: 'unset', path: ['reasoningEffort'] },
+      ], 7)
+    })
+    expect(screen.getByText(en.defaultSaved)).toBeTruthy()
   })
 
   it('dispatches the provider-card seat per rendered row, keyed by the owning namespace', async () => {

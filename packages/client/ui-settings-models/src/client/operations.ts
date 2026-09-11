@@ -8,8 +8,10 @@
 import type { Context as ClientContext } from '@deepseek-ai/cordis'
 import type {
   CredentialInfo, LlmDiscoveredModel, LlmModelDiscoveryRequest,
-  SettingsNamespaceView, SettingsPathOpView,
+  ModelSelection, SettingsNamespaceView, SettingsPathOpView,
 } from '@deepseek-ai/dsh-api-remotes/client'
+
+const DEFAULT_MODEL_SETTINGS_NAMESPACE = 'agent-default-model'
 
 /** What one namespace write answered. */
 export type SettingsWriteOutcome =
@@ -71,6 +73,16 @@ export interface ModelsOperations {
    * @returns the candidates, or the refusal.
    */
   discoverModels(settingsNs: string, request: LlmModelDiscoveryRequest): Promise<ModelDiscoveryOutcome>
+  /**
+   * Persist the default used by new Agents and non-Session model consumers.
+   * @param selection - provider and model chosen from the live Host catalog.
+   * @param expectedRevision - revision of the default-model section shown to the user.
+   * @returns the settings write outcome.
+   */
+  saveDefaultModel(
+    selection: Pick<ModelSelection, 'provider' | 'model'>,
+    expectedRevision: number | undefined,
+  ): Promise<SettingsWriteOutcome>
 }
 
 /**
@@ -104,6 +116,16 @@ export function createModelsOperations(ctx: ClientContext): ModelsOperations {
       return response.ok
         ? { kind: 'found', models: response.value }
         : { kind: 'refused', message: response.error.message }
+    },
+    saveDefaultModel: async (selection, expectedRevision) => {
+      const response = await ctx.remote.settings.mutate(DEFAULT_MODEL_SETTINGS_NAMESPACE, [
+        { op: 'set', path: ['provider'], value: selection.provider },
+        { op: 'set', path: ['model'], value: selection.model },
+        { op: 'unset', path: ['reasoningEffort'] },
+      ], expectedRevision)
+      if (response.ok) return { kind: 'written', view: response.value }
+      const { code, message } = response.error
+      return code === 'settings/conflict' ? { kind: 'conflict', message } : { kind: 'refused', message }
     },
   }
 }

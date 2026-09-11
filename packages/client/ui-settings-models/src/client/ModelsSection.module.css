@@ -26,6 +26,52 @@
   color: var(--dsw-alias-label-tertiary);
 }
 
+.defaultModel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 1.2fr);
+  align-items: end;
+  gap: 12px 20px;
+  padding: 14px 0;
+  border-top: 0.5px solid var(--dsw-alias-border-l2);
+  border-bottom: 0.5px solid var(--dsw-alias-border-l2);
+}
+
+.defaultModelCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.defaultModelCopy strong {
+  color: var(--dsw-alias-label-primary);
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+
+.defaultModelCopy p {
+  margin: 0;
+  color: var(--dsw-alias-label-tertiary);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.defaultModelControls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.defaultModelSelect {
+  max-width: none !important;
+}
+
+.defaultModel > .error,
+.defaultModel > .savedNotice {
+  grid-column: 1 / -1;
+}
+
 .notice {
   margin: 0;
   font-size: 12px;
@@ -627,6 +673,12 @@ select.input {
   .customizedSummary::before,
   .switchThumb {
     transition: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .defaultModel {
+    grid-template-columns: 1fr;
   }
 }
 

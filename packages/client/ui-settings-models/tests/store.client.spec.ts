@@ -53,6 +53,16 @@ const NAMESPACES = [
   },
 ]
 
+const MODEL_CATALOG = {
+  default: { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
+  routableProviders: ['deepseek-official', 'openai'],
+  groups: [
+    { id: 'deepseek-official', name: 'DeepSeek', models: [{ id: 'deepseek-v4-flash', name: 'DeepSeek-V4-Flash' }] },
+    { id: 'openai', name: 'openai', models: [{ id: 'gpt-4.1', name: 'GPT-4.1' }] },
+  ],
+  failures: [],
+}
+
 function api(overrides: {
   providers?: () => Promise<RpcResponse<{ providers: typeof DIRECTORY }>>
   describeSettings?: () => Promise<RemoteAnswer<{ writable: boolean; hasDocument: boolean; namespaces: typeof NAMESPACES }>>
@@ -102,6 +112,9 @@ function api(overrides: {
       set: () => Promise.resolve(remoteOk(undefined)),
       unset: () => Promise.resolve(remoteOk(undefined)),
     },
+    session: {
+      modelCatalog: () => Promise.resolve(remoteOk(MODEL_CATALOG)),
+    },
   }
   // The page plugin's context, scripted down to the namespaces it reaches.
   const ctx = { remote: face } as never
@@ -137,6 +150,7 @@ describe('ModelsSettingsStore', () => {
     expect(byProvider.get('anthropic')?.apiKeyEnv).toBeUndefined()
     expect(byProvider.get('ghost')).toMatchObject({ configured: false, removable: false })
     expect(state.namespaces.get('llm-pi-ai')?.ns).toBe('llm-pi-ai')
+    expect(state.modelCatalog?.default).toEqual(MODEL_CATALOG.default)
   })
 
   it('degrades the credential badge, not the page, when the credential domain fails', async () => {

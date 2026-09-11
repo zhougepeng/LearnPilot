@@ -23,6 +23,7 @@ import type {} from '@deepseek-ai/dsh-settings/types'
 import { SettingsSchemaService } from './schema.ts'
 import { SettingsScopeBinder } from './settings-scope.ts'
 import { SettingsDescribeMirror } from './settings-mirror.ts'
+import { SettingsNavigationService } from './settings-navigation.ts'
 
 export type {
   SettingsGeneralItemOwnerProps, SettingsHeaderOwnerProps, SettingsOnboardingOwnerProps,
@@ -31,6 +32,7 @@ export type {
 export type { SettingsScopeController, SettingsScopeBinder } from './settings-scope.ts'
 export type { SettingsScope, SettingsScopeSnapshot, SettingsScopeSpec } from './settings-contract.ts'
 export type { SettingsSchemaService } from './schema.ts'
+export type { SettingsNavigation, SettingsNavigationRequest } from './settings-navigation.ts'
 export type { SchemaNode } from './schema.ts'
 export type {
   SettingsDescribeFace, SettingsDescribeView, SettingsMirrorSnapshot,
@@ -57,6 +59,7 @@ export function apply(ctx: Context): void {
   // `inject`; the binder hands the same answer to every scope it binds.
   const persistence = ctx.remote.$host.isLoopback ? 'host' : 'memory'
   const mirror = new SettingsDescribeMirror(ctx, persistence)
+  new SettingsNavigationService(ctx)
   ctx.effect(() => {
     const disposers = [
       ctx.remote.$on('settings/document-updated', () => { void mirror.load() }),

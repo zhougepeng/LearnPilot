@@ -1,0 +1,6 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": { "rootDir": "src", "outDir": "lib/types" },
+  "include": ["src"],
+  "references": [{ "path": "../ui-layout" }, { "path": "../ui-renderer" }, { "path": "../ui-slots" }, { "path": "../../education/homework" }, { "path": "../../education/homework-controller/tsconfig.client.json" }, { "path": "../../api/remotes/tsconfig.client.json" }, { "path": "../../../vendor/cordis" }]
+}
