@@ -34,6 +34,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build vendored runtime entries
+        run: |
+          pnpm exec tsdown vendor/cosmokit/src/index.ts --no-config --out-dir vendor/cosmokit/lib --format esm --no-dts --sourcemap --no-clean
+          cp vendor/cosmokit/lib/index.mjs vendor/cosmokit/lib/index.js
+          pnpm exec tsdown vendor/cordis/src/index.ts --no-config --out-dir vendor/cordis/lib --format esm --no-dts --sourcemap --no-clean
+          cp vendor/cordis/lib/index.mjs vendor/cordis/lib/index.js
+
       - name: Build workspace
         run: pnpm run build:official
 
