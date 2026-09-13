@@ -264,6 +264,20 @@ function formatCommand(command: string, args: string[]): string {
 }
 
 /**
+ * Check that a staged package contains the entry file declared by its own manifest.
+ * Legacy deploy can leave a package directory and manifest while omitting its built lib.
+ * @param directory - staged package directory.
+ * @returns whether the package has a usable module entry.
+ */
+async function hasMaterializedPackage(directory: string): Promise<boolean> {
+  const manifestPath = join(directory, 'package.json')
+  if (!existsSync(manifestPath)) return false
+  const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as { main?: unknown; module?: unknown }
+  const entries = [manifest.module, manifest.main].filter((entry): entry is string => typeof entry === 'string')
+  return entries.length > 0 && entries.some(entry => existsSync(join(directory, entry)))
+}
+
+/**
  * Sequential build pipeline. Subprocesses inherit stdio and errors include
  * the command; dry runs print commands and filesystem changes.
  */
@@ -336,13 +350,14 @@ class SingleExeBuild {
     const restored: string[] = []
     for (const dependency of Object.keys(manifest.dependencies ?? {}).sort()) {
       const destination = join(this.staging, 'node_modules', dependency)
-      if (existsSync(destination)) continue
+      if (await hasMaterializedPackage(destination)) continue
       const source = join(sourceNodeModules, dependency)
       if (!existsSync(source)) {
         throw new Error(
           `build-exe-for-python-sdk: deployed dependency ${dependency} is absent from both ${destination} and ${source}.`,
         )
       }
+      await rm(destination, { recursive: true, force: true })
       await mkdir(dirname(destination), { recursive: true })
       const nestedNodeModules = join(source, 'node_modules')
       await cp(source, destination, {
