@@ -61,6 +61,17 @@ const ASSET_GLOBS = [
   'node_modules/@deepseek-ai/dsh-skill-badge/assets/**/*',
 ]
 
+/**
+ * Bare imports from the mounted Cordis tree are resolved at runtime, so pkg
+ * cannot discover their JavaScript modules from the app boot bundle alone.
+ * Keep the workspace runtime packages in the code table as well as assets;
+ * assets cover files read by path, while scripts cover ESM package imports.
+ */
+const SCRIPT_GLOBS = [
+  'node_modules/@deepseek-ai/dsh-*/**/*.js',
+  'node_modules/@deepseek-ai/cordis-plugin-*/**/*.js',
+]
+
 const PLATFORMS = ['linux', 'macos', 'win'] as const
 const ARCHES = ['x64', 'arm64'] as const
 type Platform = (typeof PLATFORMS)[number]
@@ -394,9 +405,9 @@ class SingleExeBuild {
     return undefined
   }
 
-  /** Add the executable entry and pkg assets to the staged manifest. */
+  /** Add the executable entry and pkg code and asset globs to the staged manifest. */
   async injectPkgConfig(): Promise<void> {
-    const patch = { bin: ENTRY_BIN, pkg: { assets: ASSET_GLOBS } }
+    const patch = { bin: ENTRY_BIN, pkg: { assets: ASSET_GLOBS, scripts: SCRIPT_GLOBS } }
     const manifestPath = join(this.staging, 'package.json')
     if (this.cli.dryRun) {
       console.log(`build-exe-for-python-sdk: [dry-run] patch ${manifestPath} with ${JSON.stringify(patch)}`)
