@@ -324,6 +324,7 @@ class SingleExeBuild {
     ])
     await this.restoreLegacyHoists()
     await this.materializeStagedLinks()
+    await this.materializeRuntimeEntryWrappers()
     if (this.cli.dryRun) {
       for (const name of DEPLOY_ONLY_DOCS) console.log(`build-exe-for-python-sdk: [dry-run] rm -f ${join(this.staging, name)}`)
     } else {
@@ -403,6 +404,45 @@ class SingleExeBuild {
         filter: path => path !== nestedNodeModules && !path.startsWith(nestedNodeModules + sep),
       })
       remaining = await this.findSymlink(nodeModules)
+    }
+  }
+
+  /**
+   * Restore package root entries for workspace packages whose TypeScript
+   * output is only emitted under lib/types. The package manifest still points
+   * at lib/index.js, so the executable needs a stable re-export at that path.
+   */
+  private async materializeRuntimeEntryWrappers(): Promise<void> {
+    if (this.cli.dryRun) {
+      console.log('build-exe-for-python-sdk: [dry-run] materialize missing workspace package entries')
+      return
+    }
+    const nodeModules = join(this.staging, 'node_modules')
+    const packageDirectories: string[] = []
+    for (const entry of await readdir(nodeModules, { withFileTypes: true })) {
+      if (entry.name.startsWith('@')) {
+        const scopeDirectory = join(nodeModules, entry.name)
+        for (const scoped of await readdir(scopeDirectory, { withFileTypes: true })) {
+          if (scoped.isDirectory()) packageDirectories.push(join(scopeDirectory, scoped.name))
+        }
+      } else if (entry.isDirectory()) {
+        packageDirectories.push(join(nodeModules, entry.name))
+      }
+    }
+    const restored: string[] = []
+    for (const directory of packageDirectories) {
+      const manifestPath = join(directory, 'package.json')
+      if (!existsSync(manifestPath)) continue
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as { main?: unknown }
+      if (manifest.main !== 'lib/index.js') continue
+      const entry = join(directory, 'lib/index.js')
+      if (existsSync(entry) || !existsSync(join(directory, 'lib/types/index.js'))) continue
+      await mkdir(dirname(entry), { recursive: true })
+      await writeFile(entry, "export * from './types/index.js'\n")
+      restored.push(directory.slice(nodeModules.length + 1))
+    }
+    if (restored.length > 0) {
+      console.log(`build-exe-for-python-sdk: materialized workspace package entries: ${restored.join(', ')}`)
     }
   }
 
