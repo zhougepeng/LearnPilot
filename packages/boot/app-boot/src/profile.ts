@@ -371,6 +371,10 @@ function packageEntryFromPackage(
       throw new Error(`dsh: installed package ${packageName} export ${subpath} resolves outside its package: ${target}`)
     }
     if (existsSync(entry) && statSync(entry).isFile()) return pathToFileURL(entry).href
+    // pkg stores JavaScript files in its virtual snapshot as compiled scripts;
+    // existsSync() does not expose those entries even though Node can import
+    // their file URLs at runtime. Keep declared code exports for the proxy.
+    if (isPackagedExecutable() && /\.(?:c|m)?js$/u.test(target)) return pathToFileURL(entry).href
   }
   return undefined
 }
