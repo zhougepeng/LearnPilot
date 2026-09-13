@@ -45,6 +45,7 @@ const ASSET_GLOBS = [
   'node_modules/**/*.mjs',
   'node_modules/**/package.json',
   'node_modules/**/*.json',
+  'node_modules/@deepseek-ai/*/package.json',
   // Package-owned Markdown includes runtime skill instructions and badge content.
   'node_modules/**/*.md',
   'node_modules/**/*.dylib',
@@ -327,6 +328,7 @@ class SingleExeBuild {
     await this.restoreLegacyHoists()
     await this.materializeStagedLinks()
     await this.materializeRuntimeEntryWrappers()
+    await this.materializeRuntimePackagePreload()
     if (this.cli.dryRun) {
       for (const name of DEPLOY_ONLY_DOCS) console.log(`build-exe-for-python-sdk: [dry-run] rm -f ${join(this.staging, name)}`)
     } else {
@@ -451,6 +453,52 @@ class SingleExeBuild {
     if (restored.length > 0) {
       console.log(`build-exe-for-python-sdk: materialized workspace package entries: ${restored.join(', ')}`)
     }
+  }
+
+  /**
+   * Make dynamically loaded workspace packages visible to pkg's static scanner.
+   * Profile proxies resolve these packages from file URLs at runtime, which the
+   * packager cannot discover from the loader configuration alone.
+   */
+  private async materializeRuntimePackagePreload(): Promise<void> {
+    if (this.cli.dryRun) {
+      console.log('build-exe-for-python-sdk: [dry-run] materialize workspace package preload index')
+      return
+    }
+    const nodeModules = join(this.staging, 'node_modules')
+    const scopeDirectory = join(nodeModules, '@deepseek-ai')
+    const packages: string[] = []
+    if (existsSync(scopeDirectory)) {
+      for (const entry of await readdir(scopeDirectory, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue
+        const packageDirectory = join(scopeDirectory, entry.name)
+        if (existsSync(join(packageDirectory, 'lib', 'index.js'))) {
+          packages.push(`@deepseek-ai/${entry.name}`)
+        }
+        if (entry.name === 'dsh-web-app' && existsSync(join(packageDirectory, 'lib', 'startup.js'))) {
+          packages.push('@deepseek-ai/dsh-web-app/startup')
+        }
+      }
+    }
+    packages.sort()
+    const preload = [
+      '// Generated for the packaged runtime. The function is intentionally not called.',
+      '// Its literal imports let pkg retain modules loaded through profile proxies.',
+      'export function preloadWorkspacePackages(): Promise<unknown[]> {',
+      '  return Promise.all([',
+      ...packages.map(name => `    import(${JSON.stringify(name)}),`),
+      '  ])',
+      '}',
+      '',
+    ].join('\n')
+    const preloadPath = join(nodeModules, '@deepseek-ai', 'dsh-pkg-preload.js')
+    await writeFile(preloadPath, preload)
+    const binPath = join(nodeModules, '@deepseek-ai', 'dsh', 'lib', 'bin.js')
+    const bin = await readFile(binPath, 'utf8')
+    const marker = "import '../../dsh-pkg-preload.js'\n"
+    const rewritten = bin.startsWith(marker) ? bin : marker + bin
+    await writeFile(binPath, rewritten)
+    console.log(`build-exe-for-python-sdk: materialized pkg preload index with ${packages.length} workspace packages`)
   }
 
   /** Return the first symbolic link below a directory, if one exists. */
