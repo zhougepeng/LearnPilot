@@ -438,7 +438,12 @@ class SingleExeBuild {
       const entry = join(directory, 'lib/index.js')
       if (existsSync(entry) || !existsSync(join(directory, 'lib/types/index.js'))) continue
       await mkdir(dirname(entry), { recursive: true })
-      await writeFile(entry, "export * from './types/index.js'\n")
+      await writeFile(
+        entry,
+        "import * as runtime from './types/index.js'\n"
+        + "export * from './types/index.js'\n"
+        + 'export default runtime.default ?? runtime\n',
+      )
       restored.push(directory.slice(nodeModules.length + 1))
     }
     if (restored.length > 0) {
