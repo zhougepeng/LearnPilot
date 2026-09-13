@@ -57,6 +57,11 @@ const ASSET_GLOBS = [
   'node_modules/**/*.yml',
   // web-app builds this path dynamically, so pkg cannot discover the static frontend.
   'node_modules/@deepseek-ai/dsh-web-frontend/dist/**/*',
+  // Profile proxies import workspace entry URLs from outside pkg's snapshot.
+  // Keep those JavaScript files as readable assets rather than compiled-only
+  // scripts so dynamic ESM imports can resolve them by file URL.
+  'node_modules/@deepseek-ai/dsh-*/**/*.js',
+  'node_modules/@deepseek-ai/cordis-plugin-*/**/*.js',
   // skill-badge resolves both Markdown and image resources through import.meta.url.
   'node_modules/@deepseek-ai/dsh-skill-badge/assets/**/*',
 ]
@@ -67,10 +72,7 @@ const ASSET_GLOBS = [
  * Keep the workspace runtime packages in the code table as well as assets;
  * assets cover files read by path, while scripts cover ESM package imports.
  */
-const SCRIPT_GLOBS = [
-  'node_modules/@deepseek-ai/dsh-*/**/*.js',
-  'node_modules/@deepseek-ai/cordis-plugin-*/**/*.js',
-]
+const SCRIPT_GLOBS: string[] = []
 
 const PLATFORMS = ['linux', 'macos', 'win'] as const
 const ARCHES = ['x64', 'arm64'] as const

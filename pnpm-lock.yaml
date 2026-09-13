@@ -10445,6 +10445,9 @@ importers:
       '@deepseek-ai/dsh-user-questions':
         specifier: workspace:^
         version: link:../../packages/interaction/user-questions
+      '@deepseek-ai/dsh-util-crypto':
+        specifier: workspace:^
+        version: link:../../packages/util/crypto
       '@deepseek-ai/dsh-util-time':
         specifier: workspace:^
         version: link:../../packages/util/time
