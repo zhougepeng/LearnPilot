@@ -1,6 +1,6 @@
 # LearnPilot Linux package
 
-The Linux artifact is a self-contained Node executable with the LearnPilot web profile. It does not require Node.js or pnpm on the target machine.
+The Linux artifact includes the self-contained executable and a complete Node runtime carrier. On servers that already provide Node.js, the launcher uses the carrier for reliable dynamic profile loading; otherwise it falls back to the single-file executable.
 
 Install the `.deb` package with:
 
@@ -16,7 +16,7 @@ learnpilot
 
 The default address is `http://127.0.0.1:3081/`. Set `LEARNPILOT_PORT` to use another port.
 
-The package is built on Ubuntu by `.github/workflows/learnpilot-linux.yml`. The bundled executable is produced from the supported `dsh --profile web` launcher; it does not include local `.dsh-home` data, credentials, model keys, or homework history.
+The package is built on Ubuntu by `.github/workflows/learnpilot-linux.yml`. It does not include local `.dsh-home` data, credentials, model keys, or homework history.
 
 ## 发布新版本
 

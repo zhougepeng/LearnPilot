@@ -13,6 +13,11 @@ install -d -m 0755 "$install_dir"
 install -m 0755 "$package_dir/deepseek-harness-sdk-runtime-linux-x64" "$install_dir/deepseek-harness-sdk-runtime-linux-x64"
 install -m 0755 "$package_dir/deepseek-harness-sdk-runtime-linux-x64-rg" "$install_dir/deepseek-harness-sdk-runtime-linux-x64-rg"
 install -m 0755 "$package_dir/learnpilot" "$install_dir/learnpilot"
+if [ -d "$package_dir/runtime/node" ]; then
+  rm -rf "$install_dir/runtime"
+  install -d -m 0755 "$install_dir/runtime"
+  cp -a "$package_dir/runtime/node" "$install_dir/runtime/node"
+fi
 ln -sfn "$install_dir/learnpilot" /usr/local/bin/learnpilot
 
 echo "LearnPilot installed. Start it with: learnpilot"
