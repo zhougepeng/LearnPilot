@@ -69,20 +69,21 @@ jobs:
           }
           trap cleanup EXIT
           for _ in $(seq 1 45); do
-            status="$(curl --connect-timeout 2 --max-time 5 --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3081/ || true)"
-            case "$status" in
-              200|302|401)
-                echo "LearnPilot smoke test received HTTP $status"
+            ready_url="$(docker logs learnpilot-smoke 2>&1 | sed -n 's|.*dsh web: \(http://127\.0\.0\.1:3081/?token=[A-Za-z0-9_-]*\).*|\1|p' | tail -n 1)"
+            if [ -n "$ready_url" ]; then
+              status="$(curl --connect-timeout 2 --max-time 5 --silent --output /dev/null --write-out '%{http_code}' "$ready_url" || true)"
+              if [ "$status" = "303" ]; then
+                echo "LearnPilot smoke test exchanged the startup token."
                 exit 0
-                ;;
-            esac
+              fi
+            fi
             if [[ "$(docker inspect --format '{{.State.Running}}' learnpilot-smoke)" != "true" ]]; then
               echo "::error::LearnPilot container exited before listening."
               exit 1
             fi
             sleep 2
           done
-          echo "::error::LearnPilot did not respond on port 3081."
+          echo "::error::LearnPilot did not exchange its startup token on port 3081."
           exit 1
 
       - name: Create portable image archive

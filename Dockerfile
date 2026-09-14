@@ -26,8 +26,6 @@ FROM node:24-bookworm-slim AS runtime
 
 ARG LEARNPILOT_VERSION=dev
 
-ENV PNPM_HOME=/pnpm
-ENV PATH="$PNPM_HOME:$PATH"
 ENV DSH_HOME=/data/dsh
 ENV DSH_TELEMETRY_DISABLED=1
 
@@ -35,8 +33,7 @@ LABEL org.opencontainers.image.title="LearnPilot"
 LABEL org.opencontainers.image.description="AI-assisted homework and learning workspace"
 LABEL org.opencontainers.image.version="$LEARNPILOT_VERSION"
 
-RUN corepack enable && corepack prepare pnpm@11.7.0 --activate \
-  && mkdir -p /data/dsh \
+RUN mkdir -p /data/dsh \
   && chown -R node:node /data
 
 WORKDIR /app

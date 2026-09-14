@@ -8,6 +8,7 @@ root=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 data_dir=${LEARNPILOT_DATA_DIR:-/var/lib/learnpilot}
 legacy_home=${LEARNPILOT_LEGACY_HOME:-"$HOME/.dsh"}
 container_user=${LEARNPILOT_CONTAINER_USER:-1000:1000}
+public_scheme=${LEARNPILOT_PUBLIC_SCHEME:-https}
 
 [[ -r "$archive" ]] || { echo "image archive is not readable: $archive" >&2; exit 1; }
 command -v docker >/dev/null 2>&1 || { echo "Docker is not installed. Install Docker before deploying LearnPilot." >&2; exit 1; }
@@ -36,6 +37,11 @@ for _ in $(seq 1 30); do
   case "$status" in
     200|302|401)
       echo "LearnPilot is listening on http://127.0.0.1:3081/ (HTTP $status)"
+      startup_url=$(sudo docker compose -f "$root/compose.yaml" logs --no-log-prefix learnpilot 2>&1 | sed -n 's|.*dsh web: \(http://127\.0\.0\.1:3081/?token=[A-Za-z0-9_-]*\).*|\1|p' | tail -n 1)
+      if [[ -n "$startup_url" ]]; then
+        startup_token=${startup_url##*token=}
+        echo "Open this one-time URL in a browser: ${public_scheme}://${trusted_host}/?token=${startup_token}"
+      fi
       exit 0
       ;;
   esac

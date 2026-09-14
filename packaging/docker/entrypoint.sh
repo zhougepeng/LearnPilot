@@ -4,7 +4,7 @@ set -eu
 port=${LEARNPILOT_PORT:-3081}
 
 if [ -n "${LEARNPILOT_TRUSTED_HOST:-}" ]; then
-  exec pnpm dsh --profile web --port "$port" --no-open --trusted-host "$LEARNPILOT_TRUSTED_HOST" "$@"
+  exec node --import tsx/esm apps/cli/src/bin.ts --profile web --port "$port" --no-open --trusted-host "$LEARNPILOT_TRUSTED_HOST" "$@"
 fi
 
-exec pnpm dsh --profile web --port "$port" --no-open "$@"
+exec node --import tsx/esm apps/cli/src/bin.ts --profile web --port "$port" --no-open "$@"

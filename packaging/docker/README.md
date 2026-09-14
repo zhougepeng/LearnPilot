@@ -1,6 +1,6 @@
 # LearnPilot Docker deployment
 
-The Docker image is the supported Linux-server release path. It retains the built workspace and its real module layout, which lets the `web` profile load plugins at runtime. The older Linux `.deb` and `.tar.gz` are still desktop-style artifacts; they are not the server deployment route.
+The Docker image is the supported Linux-server release path. It retains the built workspace and its real module layout, which lets the `web` profile load plugins at runtime. Its entrypoint runs the built checkout's supported `dsh` profile directly, so startup does not download a package manager. The older Linux `.deb` and `.tar.gz` are still desktop-style artifacts; they are not the server deployment route.
 
 ## Build and release
 
@@ -23,5 +23,7 @@ bash /opt/learnpilot-docker/deploy.sh \
 ```
 
 `deploy.sh` copies the previous `~/.dsh` directory into `/var/lib/learnpilot/dsh` only once, before starting the container. It assigns that directory to the container user so settings and session data remain writable after migration. The container binds only to `127.0.0.1:3081`; the existing Nginx reverse proxy remains the public entry point.
+
+On a fresh browser, the web profile requires a one-time startup URL to create its browser session. The deployment script prints that URL after a successful start. Open it once, then the clean public address works in that browser until the session expires or the service is restarted.
 
 Completion means the script reports an HTTP response from `127.0.0.1:3081`, and the public Nginx address no longer returns 502.
