@@ -1,0 +1,112 @@
+name: LearnPilot Docker image
+run-name: LearnPilot Docker image #${{ github.run_number }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag, for example v0.2.0
+        required: true
+        type: string
+  push:
+    branches: [master]
+    paths-ignore:
+      - "**/*.md"
+      - ".agents/**"
+
+permissions:
+  contents: write
+
+env:
+  IMAGE_NAME: learnpilot
+
+jobs:
+  image:
+    name: Build and smoke-test Linux x64 image
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve image version
+        id: version
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          tag="${RELEASE_TAG:-}"
+          if [ -n "$tag" ]; then
+            if [[ ! "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+              echo "::error::Release tag must look like v0.2.0"
+              exit 1
+            fi
+          else
+            tag="0.1.${GITHUB_RUN_NUMBER}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        run: |
+          docker build \
+            --build-arg LEARNPILOT_VERSION="${{ steps.version.outputs.tag }}" \
+            --tag "${IMAGE_NAME}:${{ steps.version.outputs.tag }}" \
+            .
+
+      - name: Start clean-container smoke test
+        run: |
+          set -euo pipefail
+          mkdir -p .learnpilot-smoke-data
+          docker run --detach \
+            --name learnpilot-smoke \
+            --volume "$PWD/.learnpilot-smoke-data:/data" \
+            --publish 127.0.0.1:3081:3081 \
+            --env LEARNPILOT_TRUSTED_HOST=127.0.0.1 \
+            "${IMAGE_NAME}:${{ steps.version.outputs.tag }}"
+          cleanup() {
+            docker logs learnpilot-smoke || true
+            docker rm --force learnpilot-smoke || true
+          }
+          trap cleanup EXIT
+          for _ in $(seq 1 45); do
+            status="$(curl --connect-timeout 2 --max-time 5 --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:3081/ || true)"
+            case "$status" in
+              200|302|401)
+                echo "LearnPilot smoke test received HTTP $status"
+                exit 0
+                ;;
+            esac
+            if [[ "$(docker inspect --format '{{.State.Running}}' learnpilot-smoke)" != "true" ]]; then
+              echo "::error::LearnPilot container exited before listening."
+              exit 1
+            fi
+            sleep 2
+          done
+          echo "::error::LearnPilot did not respond on port 3081."
+          exit 1
+
+      - name: Create portable image archive
+        run: |
+          set -euo pipefail
+          mkdir -p dist-docker
+          docker save "${IMAGE_NAME}:${{ steps.version.outputs.tag }}" | gzip -1 > "dist-docker/learnpilot-${{ steps.version.outputs.tag }}-linux-x64.tar.gz"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: learnpilot-docker-linux-x64
+          path: dist-docker/learnpilot-${{ steps.version.outputs.tag }}-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish GitHub release image archive
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --title "LearnPilot $RELEASE_TAG" --generate-notes
+          fi
+          gh release upload "$RELEASE_TAG" \
+            "dist-docker/learnpilot-${RELEASE_TAG}-linux-x64.tar.gz" \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber

@@ -1,5 +1,7 @@
 # LearnPilot Linux package
 
+For a Linux server, use the tested Docker release described in [`../docker/README.md`](../docker/README.md). The `.deb` and `.tar.gz` below remain useful as local installer artifacts, but they are not the production-server release path.
+
 The Linux artifact includes the self-contained executable and a complete Node runtime carrier. On servers that already provide Node.js, the launcher uses the carrier for reliable dynamic profile loading; otherwise it falls back to the single-file executable.
 
 Install the `.deb` package with:

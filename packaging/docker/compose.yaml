@@ -1,0 +1,14 @@
+services:
+  learnpilot:
+    image: ${LEARNPILOT_IMAGE:?Set LEARNPILOT_IMAGE to the loaded image tag.}
+    container_name: learnpilot
+    restart: unless-stopped
+    environment:
+      DSH_HOME: /data/dsh
+      DSH_TELEMETRY_DISABLED: "1"
+      LEARNPILOT_PORT: "3081"
+      LEARNPILOT_TRUSTED_HOST: ${LEARNPILOT_TRUSTED_HOST:?Set LEARNPILOT_TRUSTED_HOST to the public host name or IP.}
+    volumes:
+      - ${LEARNPILOT_DATA_DIR:-/var/lib/learnpilot}:/data
+    ports:
+      - "127.0.0.1:${LEARNPILOT_PORT:-3081}:3081"
