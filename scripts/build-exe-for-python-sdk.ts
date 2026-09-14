@@ -483,7 +483,9 @@ class SingleExeBuild {
           const sourceLib = join(directory, 'lib')
           if (existsSync(destination) && existsSync(sourceLib)) {
             const destinationLib = join(destination, 'lib')
-            if (resolve(sourceLib) !== resolve(destinationLib)) {
+            const sourceReal = await realpath(sourceLib)
+            const destinationReal = await realpath(destinationLib).catch(() => undefined)
+            if (sourceReal !== destinationReal) {
               await mkdir(destinationLib, { recursive: true })
               await cp(sourceLib, destinationLib, { recursive: true, dereference: true, force: true })
               await copyFile(manifestPath, join(destinationLib, 'package.json'))
