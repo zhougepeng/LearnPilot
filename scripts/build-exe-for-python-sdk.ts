@@ -496,7 +496,10 @@ class SingleExeBuild {
     const binPath = join(nodeModules, '@deepseek-ai', 'dsh', 'lib', 'bin.js')
     const bin = await readFile(binPath, 'utf8')
     const marker = "import '../../dsh-pkg-preload.js'\n"
-    const rewritten = bin.startsWith(marker) ? bin : marker + bin
+    const shebangEnd = bin.startsWith('#!') ? bin.indexOf('\n') + 1 : 0
+    const rewritten = bin.includes(marker)
+      ? bin
+      : bin.slice(0, shebangEnd) + marker + bin.slice(shebangEnd)
     await writeFile(binPath, rewritten)
     console.log(`build-exe-for-python-sdk: materialized pkg preload index with ${packages.length} workspace packages`)
   }
