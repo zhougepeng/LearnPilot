@@ -18,6 +18,8 @@ COPY . .
 ARG DSH_CLIENT_COMMIT_HASH
 RUN test -n "$DSH_CLIENT_COMMIT_HASH" \
   && pnpm install --frozen-lockfile \
+  && DSH_CLIENT_COMMIT_HASH="$DSH_CLIENT_COMMIT_HASH" pnpm run build:lib \
+  && pnpm exec tsdown --config packaging/docker/vendor-runtime.tsdown.ts \
   && DSH_CLIENT_COMMIT_HASH="$DSH_CLIENT_COMMIT_HASH" pnpm run build:official \
   && DSH_CLIENT_COMMIT_HASH="$DSH_CLIENT_COMMIT_HASH" pnpm exec tsdown
 
