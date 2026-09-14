@@ -327,6 +327,7 @@ class SingleExeBuild {
     ])
     await this.restoreLegacyHoists()
     await this.materializeStagedLinks()
+    await this.materializeWorkspaceBuildOutputs()
     await this.materializeRuntimeEntryWrappers()
     await this.materializeRuntimePackagePreload()
     if (this.cli.dryRun) {
@@ -453,6 +454,49 @@ class SingleExeBuild {
     if (restored.length > 0) {
       console.log(`build-exe-for-python-sdk: materialized workspace package entries: ${restored.join(', ')}`)
     }
+  }
+
+  /**
+   * Restore built workspace output omitted by legacy deploy's package-file
+   * projection. Runtime profile bundles import these files by explicit export
+   * URL, and some compiled modules resolve their package manifest from lib/.
+   */
+  private async materializeWorkspaceBuildOutputs(): Promise<void> {
+    if (this.cli.dryRun) {
+      console.log('build-exe-for-python-sdk: [dry-run] materialize workspace build outputs')
+      return
+    }
+    const roots = [join(root, 'apps'), join(root, 'packages'), join(root, 'vendor')]
+    const visit = async (directory: string): Promise<void> => {
+      let entries
+      try {
+        entries = await readdir(directory, { withFileTypes: true })
+      } catch {
+        return
+      }
+      const manifestEntry = entries.find(entry => entry.isFile() && entry.name === 'package.json')
+      if (manifestEntry !== undefined) {
+        const manifestPath = join(directory, manifestEntry.name)
+        const manifest = JSON.parse(await readFile(manifestPath, 'utf8')) as { name?: unknown }
+        if (typeof manifest.name === 'string' && manifest.name.startsWith('@deepseek-ai/')) {
+          const destination = join(this.staging, 'node_modules', ...manifest.name.split('/'))
+          const sourceLib = join(directory, 'lib')
+          if (existsSync(destination) && existsSync(sourceLib)) {
+            const destinationLib = join(destination, 'lib')
+            await mkdir(destinationLib, { recursive: true })
+            await cp(sourceLib, destinationLib, { recursive: true, dereference: true, force: true })
+            await copyFile(manifestPath, join(destinationLib, 'package.json'))
+          }
+        }
+      }
+      for (const entry of entries) {
+        if (entry.isDirectory() && entry.name !== 'node_modules' && entry.name !== 'lib') {
+          await visit(join(directory, entry.name))
+        }
+      }
+    }
+    for (const rootDirectory of roots) await visit(rootDirectory)
+    console.log('build-exe-for-python-sdk: materialized workspace build outputs')
   }
 
   /**
