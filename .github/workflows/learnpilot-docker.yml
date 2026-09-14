@@ -48,6 +48,7 @@ jobs:
         run: |
           docker build \
             --build-arg LEARNPILOT_VERSION="${{ steps.version.outputs.tag }}" \
+            --build-arg DSH_CLIENT_COMMIT_HASH="${GITHUB_SHA}" \
             --tag "${IMAGE_NAME}:${{ steps.version.outputs.tag }}" \
             .
 

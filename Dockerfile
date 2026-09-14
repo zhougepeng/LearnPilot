@@ -15,7 +15,10 @@ RUN apt-get update \
 WORKDIR /app
 COPY . .
 
-RUN pnpm install --frozen-lockfile && pnpm run build:official
+ARG DSH_CLIENT_COMMIT_HASH
+RUN test -n "$DSH_CLIENT_COMMIT_HASH" \
+  && pnpm install --frozen-lockfile \
+  && DSH_CLIENT_COMMIT_HASH="$DSH_CLIENT_COMMIT_HASH" pnpm run build:official
 
 FROM node:24-bookworm-slim AS runtime
 
