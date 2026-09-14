@@ -68,7 +68,9 @@ jobs:
             docker rm --force learnpilot-smoke || true
           }
           trap cleanup EXIT
-          for _ in $(seq 1 45); do
+          # The Web profile loads its full plugin set on a cold filesystem.
+          # Keep the test strict, while allowing the observed cold start time.
+          for _ in $(seq 1 90); do
             ready_url="$(docker logs learnpilot-smoke 2>&1 | sed -n 's|.*dsh web: \(http://127\.0\.0\.1:3081/?token=[A-Za-z0-9_-]*\).*|\1|p' | tail -n 1)"
             if [ -n "$ready_url" ]; then
               status="$(curl --connect-timeout 2 --max-time 5 --silent --output /dev/null --write-out '%{http_code}' "$ready_url" || true)"
