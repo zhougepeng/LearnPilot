@@ -6,7 +6,11 @@ FROM node:24-bookworm-slim AS build
 ENV PNPM_HOME=/pnpm
 ENV PATH="$PNPM_HOME:$PATH"
 
-RUN corepack enable && corepack prepare pnpm@11.7.0 --activate
+RUN apt-get update \
+  && apt-get install --yes --no-install-recommends python3 make g++ git \
+  && rm -rf /var/lib/apt/lists/* \
+  && corepack enable \
+  && corepack prepare pnpm@11.7.0 --activate
 
 WORKDIR /app
 COPY . .
