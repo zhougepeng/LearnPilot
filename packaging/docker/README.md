@@ -22,6 +22,6 @@ bash /opt/learnpilot-docker/deploy.sh \
   47.85.37.105
 ```
 
-`deploy.sh` copies the previous `~/.dsh` directory into `/var/lib/learnpilot/dsh` only once, before starting the container. The container binds only to `127.0.0.1:3081`; the existing Nginx reverse proxy remains the public entry point.
+`deploy.sh` copies the previous `~/.dsh` directory into `/var/lib/learnpilot/dsh` only once, before starting the container. It assigns that directory to the container user so settings and session data remain writable after migration. The container binds only to `127.0.0.1:3081`; the existing Nginx reverse proxy remains the public entry point.
 
 Completion means the script reports an HTTP response from `127.0.0.1:3081`, and the public Nginx address no longer returns 502.
