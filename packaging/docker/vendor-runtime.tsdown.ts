@@ -1,6 +1,8 @@
 import { resolve } from 'node:path'
 import { defineConfig } from 'tsdown'
 
+const root = resolve(import.meta.dirname, '..', '..')
+
 const shared = {
   format: ['esm'],
   platform: 'node',
@@ -13,8 +15,8 @@ const shared = {
 function vendorRuntime(name: string) {
   return {
     ...shared,
-    entry: [resolve(import.meta.dirname, '..', '..', 'vendor', name, 'lib', 'types', 'index.js')],
-    outDir: resolve(import.meta.dirname, '..', '..', 'vendor', name, 'lib'),
+    entry: [resolve(root, 'vendor', name, 'lib', 'types', 'index.js')],
+    outDir: resolve(root, 'vendor', name, 'lib'),
   }
 }
 
