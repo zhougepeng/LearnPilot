@@ -56,6 +56,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .learnpilot-smoke-data
+          sudo chown 1000:1000 .learnpilot-smoke-data
           docker run --detach \
             --name learnpilot-smoke \
             --volume "$PWD/.learnpilot-smoke-data:/data" \
